@@ -1,13 +1,13 @@
 import sys
 import cv2
-from PyQt5.QtWidgets import QApplication, QDesktopWidget, QDialog, QPushButton, QStackedWidget, QWidget,QLabel, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QDesktopWidget, QDialog, QGridLayout, QPushButton, QStackedWidget, QWidget,QLabel, QVBoxLayout
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QColor
 from PyQt5.QtGui import QPalette
 from PyQt5.QtCore import Qt
-
+from PyQt5.QtGui import *
 
 
 class ShowVideo(QtCore.QObject):
@@ -65,6 +65,7 @@ class ImageViewer(QtWidgets.QWidget):
 
         self.image = image
         if image.size() != self.size():
+            print("image size",image.size())
             self.setFixedSize(image.size())
         self.update()
 
@@ -139,16 +140,19 @@ class TPRSecondWindow(QWidget):
         self.image_viewer = ImageViewer()
         self.vid = self.widget.vid
 
-        vertical_layout = QtWidgets.QVBoxLayout()
-        horizontal_layout = QtWidgets.QHBoxLayout()
-        horizontal_layout.addWidget(self.image_viewer)
-        horizontal_layout2 = QtWidgets.QHBoxLayout()
+        grid_layout = QtWidgets.QGridLayout()
         
-        vertical_layout.addLayout(horizontal_layout)
+        grid_layout.addWidget(self.image_viewer,0,0,2,-1,Qt.AlignCenter)
 
         btn = QPushButton("선택")
         btn.clicked.connect(self.btn_click)
         print(btn.sizeHint())
+
+        #dummy_label
+        for i in range(3):
+            lab = QLabel("")
+            lab.setAlignment(Qt.AlignCenter)
+            grid_layout.addWidget(lab, 2, i)
 
         label1 = QLabel("포인트를 적립하지 않겠습니다.")
         label1.setAlignment(Qt.AlignCenter)
@@ -160,18 +164,63 @@ class TPRSecondWindow(QWidget):
         label1.setFont(font1)
         btn.resize(50,50)
         
-        horizontal_layout2.addWidget(label1)
-        horizontal_layout2.addWidget(btn)
+        grid_layout.addWidget(label1, 2, 3)
+        grid_layout.addWidget(btn, 2, 4)
 
-        vertical_layout.addLayout(horizontal_layout2)
         self.thread = QtCore.QThread()
-        self.setLayout(vertical_layout)
+        self.setLayout(grid_layout)
 
     def btn_click(self):
         print("btn_click")
+        if self.widget.currentIndex() == 1:
+            self.widget.setCurrentIndex(self.widget.widget.currentIndex()+1)
+            print("swap!!")
 
 # 800 400
+# https://pixabay.com/ko/vectors/%EC%9E%AC%ED%99%9C%EC%9A%A9-%EA%B8%B0%ED%98%B8-%EB%A1%9C%EA%B3%A0-%EB%85%B9%EC%83%89-304974/
+
+class TPRThirdWindow(QWidget):
+    def __init__(self, widget):
+        self.widget = widget
+        super().__init__()
+        self.initUI()
     
+    def initUI(self):
+        print("TPR Third Window initUI")
+        grid_layout = QGridLayout()
+        recycle = QPixmap()
+        recycle.load("C:/Users/nav96/Desktop/recycling-304974_1280.png")
+        recycle = recycle.scaledToHeight(120)
+
+        label1 = QLabel()
+        label1.setPixmap(recycle)
+
+        label1.setAlignment(Qt.AlignRight|Qt.AlignCenter)
+
+        label2 = QLabel("감사합니다.")
+        label2.setAlignment(Qt.AlignCenter)
+        font1 = label2.font()
+        font1.setPointSize(40)
+        font1.setBold(True)
+        
+        label2.setFont(font1)
+        grid_layout.addWidget(label1,1,1)
+        grid_layout.addWidget(label2,1,2)
+        for i in range(5):
+            grid_layout.addWidget(QLabel(),0,i)
+            grid_layout.addWidget(QLabel(),2,i)
+        self.setLayout(grid_layout)
+        QtCore.QTimer.singleShot(5000, self.moveFirstWindow) #25 ms
+    
+    def moveFirstWindow(self):
+        if self.widget.currentIndex() == 2:
+            self.widget.setCurrentIndex(0)
+    
+    def mouseReleaseEvent(self, e):
+        print("click!!")
+        if self.widget.currentIndex() == 2:
+            self.widget.setCurrentIndex(0)
+        
 
 class TPRWindowManager(QStackedWidget):
     def __init__(self):
@@ -183,9 +232,11 @@ class TPRWindowManager(QStackedWidget):
         self.widget = self
         self.w = TPRFirstWindow(self)
         self.s = TPRSecondWindow(self)
+        self.t = TPRThirdWindow(self)
 
         self.widget.addWidget(self.w)
         self.widget.addWidget(self.s)
+        self.widget.addWidget(self.t)
 
         self.widget.setWindowTitle("TPR Service")
         self.widget.setWindowFlag(QtCore.Qt.FramelessWindowHint)
