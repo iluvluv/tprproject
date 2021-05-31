@@ -59,7 +59,7 @@ class ShowVideo(QtCore.QObject):
                 self.widget.s.thread.quit()
                 break
             print('webcam module thread')
-            k = cv2.waitKey(30) & 0xff
+            k = cv2.waitKey(0) & 0xff
             if k == 27:
                 break
             qt_image1 = QtGui.QImage(color_swapped_image.data,
@@ -73,7 +73,12 @@ class ShowVideo(QtCore.QObject):
             QtCore.QTimer.singleShot(25, loop.quit) #25 ms
             # singleshot은 다른 스레드?로 돌아감
             loop.exec_()
-
+    def buffer_clear(self):
+        buffer_size = cv2.CAP_PROP_BUFFERSIZE
+        print("buffer size", buffer_size)
+        while buffer_size > 0:
+            buffer_size -= 1
+            self.camera.read()
 
 class ImageViewer(QtWidgets.QWidget):
     def __init__(self, parent=None):
